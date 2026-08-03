@@ -49,6 +49,28 @@ public Task(String title, String description, LocalDate dueDate) {
     this.createdAt = LocalDateTime.now();
 }
 
+public void updateTask(String title, String description, LocalDate dueDate) {
+
+    this.title = title;
+    this.description = description;
+    this.dueDate = dueDate;
+
+}
+
+
+public void startTask() {
+
+    this.status = TaskStatus.IN_PROGRESS;
+
+}
+
+
+public void completeTask() {
+
+    this.status = TaskStatus.COMPLETED;
+
+}
+
 
     public Long getId() {
         return id;
@@ -79,8 +101,8 @@ public Task(String title, String description, LocalDate dueDate) {
         return createdAt;
     }
 
-    public void setStatus(TaskStatus status) {
-        this.status = status;
-    }
+  public void changeStatus(TaskStatus status) {
+    this.status = status;
+}
 
 }
