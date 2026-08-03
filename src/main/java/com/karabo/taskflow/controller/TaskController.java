@@ -15,6 +15,8 @@ import com.karabo.taskflow.dto.TaskRequest;
 import com.karabo.taskflow.dto.TaskResponse;
 import com.karabo.taskflow.service.TaskService;
 
+import jakarta.validation.Valid;
+
 
 @RestController
 @RequestMapping("/api/tasks")
@@ -45,18 +47,19 @@ public class TaskController {
     }
 
 
-    @PostMapping
-    public TaskResponse createTask(@RequestBody TaskRequest request) {
+@PostMapping
+public TaskResponse createTask(
+        @Valid @RequestBody TaskRequest request) {
 
-        return taskService.createTask(request);
+    return taskService.createTask(request);
 
-    }
+}
 
 
     @PutMapping("/{id}")
     public TaskResponse updateTask(
             @PathVariable Long id,
-            @RequestBody TaskRequest request) {
+            @Valid @RequestBody TaskRequest request) {
 
         return taskService.updateTask(id, request);
 
