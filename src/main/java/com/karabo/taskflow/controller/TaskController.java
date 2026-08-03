@@ -11,12 +11,15 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.karabo.taskflow.model.Task;
+import com.karabo.taskflow.dto.TaskRequest;
+import com.karabo.taskflow.dto.TaskResponse;
 import com.karabo.taskflow.service.TaskService;
+
 
 @RestController
 @RequestMapping("/api/tasks")
 public class TaskController {
+
 
     private final TaskService taskService;
 
@@ -27,41 +30,44 @@ public class TaskController {
 
 
     @GetMapping
-    public List<Task> getAllTasks() {
+    public List<TaskResponse> getAllTasks() {
 
         return taskService.getAllTasks();
 
     }
 
 
-    @PostMapping
-    public Task createTask(@RequestBody Task task) {
+    @GetMapping("/{id}")
+    public TaskResponse getTaskById(@PathVariable Long id) {
 
-        return taskService.createTask(task);
+        return taskService.getTaskById(id);
 
     }
 
-    @GetMapping("/{id}")
-public Task getTaskById(@PathVariable Long id) {
 
-    return taskService.getTaskById(id);
+    @PostMapping
+    public TaskResponse createTask(@RequestBody TaskRequest request) {
 
-}
+        return taskService.createTask(request);
 
-@PutMapping("/{id}")
-public Task updateTask(
-        @PathVariable Long id,
-        @RequestBody Task task) {
+    }
 
-    return taskService.updateTask(id, task);
 
-}
+    @PutMapping("/{id}")
+    public TaskResponse updateTask(
+            @PathVariable Long id,
+            @RequestBody TaskRequest request) {
 
-@DeleteMapping("/{id}")
-public void deleteTask(@PathVariable Long id) {
+        return taskService.updateTask(id, request);
 
-    taskService.deleteTask(id);
+    }
 
-}
+
+    @DeleteMapping("/{id}")
+    public void deleteTask(@PathVariable Long id) {
+
+        taskService.deleteTask(id);
+
+    }
 
 }

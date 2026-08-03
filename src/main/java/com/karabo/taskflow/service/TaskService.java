@@ -4,6 +4,9 @@ import java.util.List;
 
 import org.springframework.stereotype.Service;
 
+import com.karabo.taskflow.dto.TaskRequest;
+import com.karabo.taskflow.dto.TaskResponse;
+import com.karabo.taskflow.exception.TaskNotFoundException;
 import com.karabo.taskflow.model.Task;
 import com.karabo.taskflow.repository.TaskRepository;
 
@@ -18,45 +21,84 @@ public class TaskService {
     }
 
 
-    public List<Task> getAllTasks() {
-        return taskRepository.findAll();
-    }
+   public List<TaskResponse> getAllTasks() {
+
+    return taskRepository.findAll()
+            .stream()
+            .map(this::mapToResponse)
+            .toList();
+
+}
 
 
-    public Task getTaskById(Long id) {
-        return taskRepository.findById(id)
-                .orElse(null);
-    }
+public TaskResponse getTaskById(Long id) {
+
+    Task task = taskRepository.findById(id)
+            .orElseThrow(() ->
+                    new TaskNotFoundException(
+                            "Task with id " + id + " not found"
+                    )
+            );
+
+    return mapToResponse(task);
+}
 
 
-    public Task createTask(Task task) {
-        return taskRepository.save(task);
-    }
+ public TaskResponse createTask(TaskRequest request) {
 
-public Task updateTask(Long id, Task updatedTask) {
+    Task task = new Task(
+            request.getTitle(),
+            request.getDescription(),
+            request.getDueDate()
+    );
+
+
+    Task savedTask = taskRepository.save(task);
+
+
+    return mapToResponse(savedTask);
+
+}
+
+public TaskResponse updateTask(Long id, TaskRequest request) {
 
     Task existingTask = taskRepository.findById(id)
-            .orElse(null);
+            .orElseThrow(() ->
+                    new TaskNotFoundException(
+                            "Task with id " + id + " not found"
+                    )
+            );
 
-    if (existingTask != null) {
 
-        existingTask.updateTask(
-                updatedTask.getTitle(),
-                updatedTask.getDescription(),
-                updatedTask.getDueDate()
-        );
+    existingTask.updateTask(
+            request.getTitle(),
+            request.getDescription(),
+            request.getDueDate()
+    );
 
-       existingTask.changeStatus(updatedTask.getStatus());
 
-        return taskRepository.save(existingTask);
-    }
+    Task updatedTask = taskRepository.save(existingTask);
 
-    return null;
+
+    return mapToResponse(updatedTask);
 }
 
 public void deleteTask(Long id) {
 
     taskRepository.deleteById(id);
+
+}
+
+private TaskResponse mapToResponse(Task task) {
+
+    return new TaskResponse(
+            task.getId(),
+            task.getTitle(),
+            task.getDescription(),
+            task.getStatus(),
+            task.getDueDate(),
+            task.getCreatedAt()
+    );
 
 }
 
