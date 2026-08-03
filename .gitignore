@@ -30,4 +30,11 @@ build/
 !**/src/test/**/build/
 
 ### VS Code ###
+
+.idea/
 .vscode/
+*.class
+*.log
+
+.env
+application.properties
