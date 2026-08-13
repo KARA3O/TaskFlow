@@ -1,0 +1,95 @@
+* { box-sizing: border-box; }
+
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #0d1117;
+    color: #f0f6fc;
+}
+
+.container {
+    width: min(900px, 92%);
+    margin: 50px auto;
+}
+
+section {
+    background: #161b22;
+    padding: 30px;
+    border-radius: 14px;
+    border: 1px solid #30363d;
+}
+
+h1 { margin-top: 0; }
+
+.muted { color: #8b949e; }
+
+.tabs {
+    display: flex;
+    gap: 8px;
+    margin: 25px 0 15px;
+}
+
+button, input {
+    font: inherit;
+}
+
+button {
+    cursor: pointer;
+    border: 0;
+    border-radius: 8px;
+    padding: 11px 15px;
+    background: #238636;
+    color: white;
+}
+
+button.secondary {
+    background: #30363d;
+}
+
+.tabs button {
+    background: #30363d;
+}
+
+.tabs button.active {
+    background: #238636;
+}
+
+form {
+    display: grid;
+    gap: 12px;
+}
+
+input {
+    width: 100%;
+    padding: 12px;
+    border-radius: 8px;
+    border: 1px solid #30363d;
+    background: #0d1117;
+    color: white;
+}
+
+.hidden { display: none !important; }
+
+.topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+}
+
+#taskForm {
+    margin: 25px 0;
+}
+
+.task {
+    border: 1px solid #30363d;
+    border-radius: 10px;
+    padding: 16px;
+    margin: 10px 0;
+}
+
+.task h3 { margin-top: 0; }
+
+#authMessage, #taskMessage {
+    min-height: 20px;
+}

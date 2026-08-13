@@ -1,0 +1,28 @@
+package com.karabo.taskflow.dto;
+
+import java.time.LocalDateTime;
+
+import com.karabo.taskflow.model.Role;
+
+public class UserResponse {
+
+    private final Long id;
+    private final String username;
+    private final String email;
+    private final Role role;
+    private final LocalDateTime createdAt;
+
+    public UserResponse(Long id, String username, String email, Role role, LocalDateTime createdAt) {
+        this.id = id;
+        this.username = username;
+        this.email = email;
+        this.role = role;
+        this.createdAt = createdAt;
+    }
+
+    public Long getId() { return id; }
+    public String getUsername() { return username; }
+    public String getEmail() { return email; }
+    public Role getRole() { return role; }
+    public LocalDateTime getCreatedAt() { return createdAt; }
+}
