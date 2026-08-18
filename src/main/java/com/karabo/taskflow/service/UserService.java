@@ -15,12 +15,16 @@ public class UserService implements UserDetailsService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
-    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+    public UserService(
+            UserRepository userRepository,
+            PasswordEncoder passwordEncoder) {
+
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
     }
 
     public UserResponse createUser(UserRequest request) {
+
         if (userRepository.existsByEmail(request.getEmail())) {
             throw new IllegalArgumentException("Email is already registered");
         }
@@ -40,7 +44,8 @@ public class UserService implements UserDetailsService {
 
     public User findByEmail(String email) {
         return userRepository.findByEmail(email)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+                .orElseThrow(() ->
+                        new UsernameNotFoundException("User not found"));
     }
 
     @Override
@@ -49,6 +54,7 @@ public class UserService implements UserDetailsService {
     }
 
     public UserResponse mapToResponse(User user) {
+
         return new UserResponse(
                 user.getId(),
                 user.getDisplayUsername(),
