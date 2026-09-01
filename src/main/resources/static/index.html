@@ -4,53 +4,127 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TaskFlow</title>
+    <meta name="description" content="TaskFlow &mdash; simple task management with JWT authentication.">
     <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
+<div class="bg-glow" aria-hidden="true"></div>
+
 <main class="container">
-    <section id="auth">
-        <h1>TaskFlow</h1>
+
+    <!-- Auth screen -->
+    <section id="auth" class="card auth-card">
+        <div class="brand">
+            <span class="brand-mark">T</span>
+            <span class="brand-name">TaskFlow</span>
+        </div>
         <p class="muted">Simple task management with JWT authentication.</p>
 
-        <div class="tabs">
-            <button id="loginTab" class="active">Login</button>
-            <button id="registerTab">Register</button>
+        <div class="tabs" role="tablist">
+            <button id="loginTab" class="tab active" role="tab" aria-selected="true">Log in</button>
+            <button id="registerTab" class="tab" role="tab" aria-selected="false">Register</button>
         </div>
 
-        <form id="loginForm">
-            <input id="loginEmail" type="email" placeholder="Email" required>
-            <input id="loginPassword" type="password" placeholder="Password" required>
-            <button type="submit">Login</button>
+        <form id="loginForm" class="form" novalidate>
+            <label class="field">
+                <span>Email</span>
+                <input id="loginEmail" type="email" placeholder="you@example.com" autocomplete="email" required>
+            </label>
+            <label class="field">
+                <span>Password</span>
+                <input id="loginPassword" type="password" placeholder="&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;" autocomplete="current-password" required>
+            </label>
+            <button type="submit" class="btn btn-primary btn-block">
+                <span class="btn-label">Log in</span>
+            </button>
         </form>
 
-        <form id="registerForm" class="hidden">
-            <input id="registerUsername" placeholder="Username" required minlength="3">
-            <input id="registerEmail" type="email" placeholder="Email" required>
-            <input id="registerPassword" type="password" placeholder="Password (8+ characters)" required minlength="8">
-            <button type="submit">Create account</button>
+        <form id="registerForm" class="form hidden" novalidate>
+            <label class="field">
+                <span>Username</span>
+                <input id="registerUsername" placeholder="janedoe" autocomplete="username" required minlength="3" maxlength="50">
+            </label>
+            <label class="field">
+                <span>Email</span>
+                <input id="registerEmail" type="email" placeholder="you@example.com" autocomplete="email" required>
+            </label>
+            <label class="field">
+                <span>Password</span>
+                <input id="registerPassword" type="password" placeholder="8+ characters" autocomplete="new-password" required minlength="8" maxlength="100">
+            </label>
+            <button type="submit" class="btn btn-primary btn-block">
+                <span class="btn-label">Create account</span>
+            </button>
         </form>
 
-        <p id="authMessage"></p>
+        <p id="authMessage" class="message" role="status"></p>
     </section>
 
-    <section id="dashboard" class="hidden">
-        <div class="topbar">
-            <div>
-                <h1>Dashboard</h1>
-                <p id="welcome" class="muted"></p>
+    <!-- Dashboard -->
+    <section id="dashboard" class="dashboard hidden">
+        <header class="topbar">
+            <div class="brand">
+                <span class="brand-mark">T</span>
+                <div>
+                    <h1>TaskFlow</h1>
+                    <p id="welcome" class="muted"></p>
+                </div>
             </div>
-            <button id="logoutButton" class="secondary">Logout</button>
+            <button id="logoutButton" class="btn btn-ghost">Log out</button>
+        </header>
+
+        <div class="stats" id="stats" aria-hidden="true">
+            <div class="stat">
+                <span class="stat-value" id="statTotal">0</span>
+                <span class="stat-label">Total</span>
+            </div>
+            <div class="stat">
+                <span class="stat-value" id="statPending">0</span>
+                <span class="stat-label">Pending</span>
+            </div>
+            <div class="stat">
+                <span class="stat-value" id="statProgress">0</span>
+                <span class="stat-label">In progress</span>
+            </div>
+            <div class="stat">
+                <span class="stat-value" id="statDone">0</span>
+                <span class="stat-label">Completed</span>
+            </div>
         </div>
 
-        <form id="taskForm">
-            <input id="taskTitle" placeholder="Task title" required>
-            <input id="taskDescription" placeholder="Description" required>
-            <input id="taskDueDate" type="date" required>
-            <button type="submit">Add Task</button>
-        </form>
+        <div class="card task-form-card">
+            <h2 id="taskFormTitle">New task</h2>
+            <form id="taskForm" class="form form-grid">
+                <input type="hidden" id="taskId" value="">
+                <label class="field">
+                    <span>Title</span>
+                    <input id="taskTitle" placeholder="Ship the release notes" required maxlength="200">
+                </label>
+                <label class="field field-wide">
+                    <span>Description</span>
+                    <input id="taskDescription" placeholder="What needs to happen?" required maxlength="1000">
+                </label>
+                <label class="field">
+                    <span>Due date</span>
+                    <input id="taskDueDate" type="date" required>
+                </label>
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary" id="taskSubmitButton">Add task</button>
+                    <button type="button" class="btn btn-ghost hidden" id="taskCancelButton">Cancel</button>
+                </div>
+            </form>
+            <p id="taskMessage" class="message" role="status"></p>
+        </div>
 
-        <p id="taskMessage"></p>
-        <div id="tasks"></div>
+        <div class="filters" role="tablist">
+            <button class="filter active" data-filter="ALL">All</button>
+            <button class="filter" data-filter="PENDING">Pending</button>
+            <button class="filter" data-filter="IN_PROGRESS">In progress</button>
+            <button class="filter" data-filter="COMPLETED">Completed</button>
+        </div>
+
+        <div id="tasks" class="tasks"></div>
+        <p id="emptyState" class="empty-state hidden">No tasks match this filter yet.</p>
     </section>
 </main>
 

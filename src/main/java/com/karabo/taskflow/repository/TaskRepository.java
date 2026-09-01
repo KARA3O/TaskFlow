@@ -1,33 +1,18 @@
 package com.karabo.taskflow.repository;
 
+import java.util.List;
+import java.util.Optional;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import com.karabo.taskflow.model.Task;
+import com.karabo.taskflow.model.User;
 
 public interface TaskRepository extends JpaRepository<Task, Long> {
 
+    // Scoped to the authenticated user so nobody can see another user's tasks.
+    List<Task> findByOwnerOrderByCreatedAtDesc(User owner);
 
-    // JpaRepository already provides:
-    // save()
-    // findAll()
-    // findById()
-    // deleteById()
-
-
-    // Custom methods for TaskRepository
-
-
-    // Find tasks by status
-    // Example: Get all completed tasks
-    // List<Task> findByStatus(TaskStatus status);
-
-
-    // Search tasks by title
-    // Example: Search "Java"
-    // List<Task> findByTitleContainingIgnoreCase(String title);
-
-
-    // Find tasks with a specific due date
-    // List<Task> findByDueDate(LocalDate dueDate);
-
+    // Scoped lookup used for get/update/delete so ownership is enforced at the query level.
+    Optional<Task> findByIdAndOwner(Long id, User owner);
 }
