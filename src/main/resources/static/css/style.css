@@ -190,6 +190,18 @@ button { font: inherit; }
 
 .btn-primary:hover:not(:disabled) { background: var(--primary-dark); }
 
+.btn-secondary {
+    background: var(--surface-2);
+    color: var(--text);
+    border: 1px solid rgba(108, 92, 231, 0.4);
+}
+
+.btn-secondary:hover:not(:disabled) {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+}
+
 .btn-ghost {
     background: var(--surface-2);
     color: var(--text);
@@ -233,6 +245,65 @@ button { font: inherit; }
     align-items: center;
     gap: 20px;
     flex-wrap: wrap;
+}
+
+/* AI Assistant Card */
+
+.ai-card {
+    background: linear-gradient(135deg, rgba(108, 92, 231, 0.08), rgba(23, 28, 40, 0.95));
+    border: 1px solid rgba(108, 92, 231, 0.3);
+    position: relative;
+    overflow: hidden;
+}
+
+.ai-card::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--primary), #a29bfe, var(--info));
+}
+
+.ai-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 8px;
+}
+
+.ai-header h3 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 700;
+    background: linear-gradient(135deg, #ffffff, #a29bfe);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.ai-recommendations-list {
+    margin-top: 16px;
+    display: grid;
+    gap: 10px;
+    border-top: 1px solid var(--border);
+    padding-top: 16px;
+}
+
+.ai-recommendation-item {
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--primary);
+    padding: 12px 16px;
+    border-radius: 8px;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.ai-recommendation-item strong {
+    color: var(--text);
 }
 
 .stats {

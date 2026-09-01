@@ -7,10 +7,12 @@ spring:
   datasource:
     url: ${DB_URL:jdbc:postgresql://localhost:5432/taskflow}
     username: ${DB_USERNAME:postgres}
+    driver-class-name: org.postgresql.Driver
     password: ${DB_PASSWORD}
   jpa:
     hibernate:
       ddl-auto: ${DDL_AUTO:update}
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
     open-in-view: false
     properties:
       hibernate:
@@ -25,6 +27,11 @@ taskflow:
     # secret. Generate one with the command in README.md.
     secret: ${JWT_SECRET}
     expiration: ${JWT_EXPIRATION:86400000}
+
+gemini:
+  # Optional: without this, the AI endpoint returns a deterministic, local fallback.
+  api:
+    key: ${GEMINI_API_KEY:}
 
 logging:
   level:

@@ -40,6 +40,10 @@ public class Task {
     @Column(nullable = false)
     private LocalDateTime createdAt;
 
+    // Optional field: helps AI calculate schedule duration (in minutes)
+    @Column(name = "estimated_minutes")
+    private Integer estimatedMinutes;
+
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "user_id", nullable = false)
     private User owner;
@@ -49,18 +53,26 @@ public class Task {
     }
 
     public Task(String title, String description, LocalDate dueDate, User owner) {
+        this(title, description, dueDate, 30, owner);
+    }
+
+    public Task(String title, String description, LocalDate dueDate, Integer estimatedMinutes, User owner) {
         this.title = title;
         this.description = description;
         this.status = TaskStatus.PENDING;
         this.dueDate = dueDate;
+        this.estimatedMinutes = estimatedMinutes != null ? estimatedMinutes : 30;
         this.createdAt = LocalDateTime.now();
         this.owner = owner;
     }
 
-    public void updateTask(String title, String description, LocalDate dueDate) {
+    public void updateTask(String title, String description, LocalDate dueDate, Integer estimatedMinutes) {
         this.title = title;
         this.description = description;
         this.dueDate = dueDate;
+        if (estimatedMinutes != null) {
+            this.estimatedMinutes = estimatedMinutes;
+        }
     }
 
     public void startTask() {
@@ -71,35 +83,16 @@ public class Task {
         this.status = TaskStatus.COMPLETED;
     }
 
-    public Long getId() {
-        return id;
-    }
+    // Getters and Setters
+    public Long getId() { return id; }
+    public String getTitle() { return title; }
+    public String getDescription() { return description; }
+    public TaskStatus getStatus() { return status; }
+    public LocalDate getDueDate() { return dueDate; }
+    public LocalDateTime getCreatedAt() { return createdAt; }
+    public Integer getEstimatedMinutes() { return estimatedMinutes; }
+    public User getOwner() { return owner; }
 
-    public String getTitle() {
-        return title;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public TaskStatus getStatus() {
-        return status;
-    }
-
-    public LocalDate getDueDate() {
-        return dueDate;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public User getOwner() {
-        return owner;
-    }
-
-    public void setStatus(TaskStatus status) {
-        this.status = status;
-    }
+    public void setStatus(TaskStatus status) { this.status = status; }
+    public void setEstimatedMinutes(Integer estimatedMinutes) { this.estimatedMinutes = estimatedMinutes; }
 }

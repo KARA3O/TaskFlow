@@ -36,6 +36,7 @@ public class TaskService {
                 request.getTitle(),
                 request.getDescription(),
                 request.getDueDate(),
+                request.getEstimatedMinutes(),
                 owner);
 
         return mapToResponse(taskRepository.save(task));
@@ -47,7 +48,8 @@ public class TaskService {
         existingTask.updateTask(
                 request.getTitle(),
                 request.getDescription(),
-                request.getDueDate());
+                request.getDueDate(),
+                request.getEstimatedMinutes());
 
         return mapToResponse(taskRepository.save(existingTask));
     }
@@ -65,14 +67,9 @@ public class TaskService {
     }
 
     public void deleteTask(Long id, User owner) {
-        Task task = findTask(id, owner);
-        taskRepository.delete(task);
+        taskRepository.delete(findTask(id, owner));
     }
 
-    // Looks up by id AND owner together, so a user can never read, modify,
-    // or delete another user's task by guessing or iterating IDs. A task
-    // that exists but belongs to someone else is reported as "not found"
-    // rather than "forbidden" so its existence isn't leaked either.
     private Task findTask(Long id, User owner) {
         return taskRepository.findByIdAndOwner(id, owner)
                 .orElseThrow(() ->
@@ -86,6 +83,7 @@ public class TaskService {
                 task.getDescription(),
                 task.getStatus(),
                 task.getDueDate(),
-                task.getCreatedAt());
+                task.getCreatedAt(),
+                task.getEstimatedMinutes());
     }
 }

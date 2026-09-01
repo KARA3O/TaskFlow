@@ -7,18 +7,13 @@ import com.karabo.taskflow.model.TaskStatus;
 
 public class TaskResponse {
 
-    private Long id;
-
-    private String title;
-
-    private String description;
-
-    private TaskStatus status;
-
-    private LocalDate dueDate;
-
-    private LocalDateTime createdAt;
-
+    private final Long id;
+    private final String title;
+    private final String description;
+    private final TaskStatus status;
+    private final LocalDate dueDate;
+    private final LocalDateTime createdAt;
+    private final Integer estimatedMinutes;
 
     public TaskResponse(
             Long id,
@@ -26,7 +21,8 @@ public class TaskResponse {
             String description,
             TaskStatus status,
             LocalDate dueDate,
-            LocalDateTime createdAt
+            LocalDateTime createdAt,
+            Integer estimatedMinutes
     ) {
         this.id = id;
         this.title = title;
@@ -34,36 +30,34 @@ public class TaskResponse {
         this.status = status;
         this.dueDate = dueDate;
         this.createdAt = createdAt;
+        this.estimatedMinutes = estimatedMinutes;
     }
-
 
     public Long getId() {
         return id;
     }
 
-
     public String getTitle() {
         return title;
     }
-
 
     public String getDescription() {
         return description;
     }
 
-
     public TaskStatus getStatus() {
         return status;
     }
-
 
     public LocalDate getDueDate() {
         return dueDate;
     }
 
-
     public LocalDateTime getCreatedAt() {
         return createdAt;
     }
 
+    public Integer getEstimatedMinutes() {
+        return estimatedMinutes;
+    }
 }

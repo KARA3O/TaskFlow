@@ -22,6 +22,11 @@
     const emptyState = document.getElementById("emptyState");
     const filterButtons = Array.from(document.querySelectorAll(".filter"));
 
+    // AI Component Elements
+    const getAiPlanBtn = document.getElementById("getAiPlanBtn");
+    const aiSummary = document.getElementById("aiSummary");
+    const aiRecommendations = document.getElementById("aiRecommendations");
+
     const STATUS_LABELS = {
         PENDING: "Pending",
         IN_PROGRESS: "In progress",
@@ -365,6 +370,47 @@
         } catch (error) {
             setMessage(taskMessage, "Could not reach the server. Please try again.", "error");
         }
+    }
+
+    // ---------- AI Plan Assistant ----------
+
+    if (getAiPlanBtn) {
+        getAiPlanBtn.addEventListener("click", async () => {
+            getAiPlanBtn.disabled = true;
+            getAiPlanBtn.textContent = "Analyzing...";
+            aiSummary.textContent = "Analyzing your tasks with Gemini AI...";
+
+            try {
+                const response = await api("/api/ai/recommendations");
+                const data = await response.json();
+
+                if (!response.ok) {
+                    aiSummary.textContent = data.error || "Could not generate AI plan.";
+                    return;
+                }
+
+                aiSummary.textContent = data.summary || "Here is your plan for today:";
+                aiRecommendations.innerHTML = "";
+
+                if (data.recommendations && data.recommendations.length > 0) {
+                    data.recommendations.forEach(rec => {
+                        const item = document.createElement("div");
+                        item.className = "ai-recommendation-item";
+                        item.innerHTML = `<strong>${escapeHtml(rec.title)}:</strong> ${escapeHtml(rec.reason)}`;
+                        aiRecommendations.appendChild(item);
+                    });
+                    aiRecommendations.classList.remove("hidden");
+                } else {
+                    aiRecommendations.innerHTML = "<p class='muted'>No urgent priorities right now.</p>";
+                    aiRecommendations.classList.remove("hidden");
+                }
+            } catch (error) {
+                aiSummary.textContent = "Unable to load AI recommendations at this time.";
+            } finally {
+                getAiPlanBtn.disabled = false;
+                getAiPlanBtn.textContent = "Analyze My Day";
+            }
+        });
     }
 
     function escapeHtml(value) {
