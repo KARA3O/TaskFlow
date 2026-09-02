@@ -80,6 +80,13 @@
                 <button id="getAiPlanBtn" class="btn btn-secondary">Analyze My Day</button>
             </div>
             <p id="aiSummary" class="muted">Click 'Analyze My Day' to generate an optimized workflow schedule using Gemini AI.</p>
+            <div id="aiMetrics" class="ai-metrics hidden" aria-live="polite">
+                <div><strong id="aiWorkload">0</strong><span>min workload</span></div>
+                <div><strong id="aiOverdue">0</strong><span>overdue</span></div>
+                <div><strong id="aiToday">0</strong><span>due today</span></div>
+                <div><strong id="aiTomorrow">0</strong><span>due tomorrow</span></div>
+            </div>
+            <div id="aiInsights" class="ai-insights hidden"></div>
             <div id="aiRecommendations" class="ai-recommendations-list hidden"></div>
         </div>
 

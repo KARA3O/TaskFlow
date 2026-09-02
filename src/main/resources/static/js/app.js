@@ -372,46 +372,481 @@
         }
     }
 
-    // ---------- AI Plan Assistant ----------
+    // ---------- AI Assistant ----------
 
-    if (getAiPlanBtn) {
-        getAiPlanBtn.addEventListener("click", async () => {
+const aiChatForm = document.getElementById("aiChatForm");
+const aiChatInput = document.getElementById("aiChatInput");
+const aiChatSend = document.getElementById("aiChatSend");
+const aiChatMessages = document.getElementById("aiChatMessages");
+const aiSuggestions = document.getElementById("aiSuggestions");
+
+let aiConversation = [];
+
+function addAiMessage(role, content) {
+    const message = document.createElement("div");
+
+    message.className =
+        role === "user"
+            ? "ai-message ai-message-user"
+            : "ai-message ai-message-ai";
+
+    const label =
+        role === "user"
+            ? "You"
+            : "TaskFlow AI";
+
+    message.innerHTML = `
+        <div class="ai-message-label">${label}</div>
+        <div>${escapeHtml(content)}</div>
+    `;
+
+    aiChatMessages.appendChild(message);
+    aiChatMessages.scrollTop =
+        aiChatMessages.scrollHeight;
+}
+
+function renderAiSuggestions(suggestions) {
+
+    aiSuggestions.innerHTML = "";
+
+    if (!suggestions ||
+        suggestions.length === 0) {
+        return;
+    }
+
+    suggestions.slice(0, 4).forEach(suggestion => {
+
+        const button =
+            document.createElement("button");
+
+        button.type = "button";
+        button.className =
+            "ai-suggestion";
+
+        button.textContent = suggestion;
+
+        button.addEventListener(
+            "click",
+            () => {
+
+                aiChatInput.value =
+                    suggestion;
+
+                aiChatInput.focus();
+            }
+        );
+
+        aiSuggestions.appendChild(button);
+    });
+}
+
+function renderAiBreakdown(breakdown) {
+
+    if (!breakdown ||
+        breakdown.length === 0) {
+        return;
+    }
+
+    const container =
+        document.createElement("div");
+
+    container.className =
+        "ai-breakdown";
+
+    const title =
+        document.createElement("strong");
+
+    title.textContent =
+        "Suggested steps";
+
+    container.appendChild(title);
+
+    const list =
+        document.createElement("ol");
+
+    breakdown.forEach(step => {
+
+        const li =
+            document.createElement("li");
+
+        li.textContent = step;
+
+        list.appendChild(li);
+    });
+
+    container.appendChild(list);
+
+    aiChatMessages.appendChild(container);
+
+    aiChatMessages.scrollTop =
+        aiChatMessages.scrollHeight;
+}
+
+function renderAiSchedule(schedule) {
+
+    if (!schedule ||
+        schedule.length === 0) {
+        return;
+    }
+
+    const container =
+        document.createElement("div");
+
+    container.className =
+        "ai-schedule";
+
+    const title =
+        document.createElement("strong");
+
+    title.textContent =
+        "Suggested schedule";
+
+    container.appendChild(title);
+
+    schedule.forEach(item => {
+
+        const row =
+            document.createElement("div");
+
+        row.className =
+            "ai-schedule-item";
+
+        row.innerHTML = `
+            <span class="ai-schedule-time">
+                ${escapeHtml(item.time || "")}
+            </span>
+
+            <div>
+                <strong>
+                    ${escapeHtml(item.taskTitle || "")}
+                </strong>
+
+                <span>
+                    ${escapeHtml(
+                        String(
+                            item.durationMinutes || 0
+                        )
+                    )} min
+                </span>
+
+                <p>
+                    ${escapeHtml(
+                        item.reason || ""
+                    )}
+                </p>
+            </div>
+        `;
+
+        container.appendChild(row);
+    });
+
+    aiChatMessages.appendChild(container);
+
+    aiChatMessages.scrollTop =
+        aiChatMessages.scrollHeight;
+}
+
+if (getAiPlanBtn) {
+
+    getAiPlanBtn.addEventListener(
+        "click",
+        async () => {
+
             getAiPlanBtn.disabled = true;
-            getAiPlanBtn.textContent = "Analyzing...";
-            aiSummary.textContent = "Analyzing your tasks with Gemini AI...";
+            getAiPlanBtn.textContent =
+                "Analyzing...";
+
+            aiSummary.textContent =
+                "Analyzing your actual workload...";
 
             try {
-                const response = await api("/api/ai/recommendations");
-                const data = await response.json();
+
+                const response =
+                    await api(
+                        "/api/ai/recommendations"
+                    );
+
+                const data =
+                    await response.json();
 
                 if (!response.ok) {
-                    aiSummary.textContent = data.error || "Could not generate AI plan.";
+
+                    aiSummary.textContent =
+                        data.error ||
+                        "Could not generate AI plan.";
+
                     return;
                 }
 
-                aiSummary.textContent = data.summary || "Here is your plan for today:";
+                aiSummary.textContent =
+                    data.summary ||
+                    "Your personalized plan is ready.";
+
+                document.getElementById(
+                    "aiWorkload"
+                ).textContent =
+                    data.totalEstimatedMinutes || 0;
+
+                document.getElementById(
+                    "aiOverdue"
+                ).textContent =
+                    data.overdueCount || 0;
+
+                document.getElementById(
+                    "aiToday"
+                ).textContent =
+                    data.dueTodayCount || 0;
+
+                document.getElementById(
+                    "aiTomorrow"
+                ).textContent =
+                    data.dueTomorrowCount || 0;
+
+                document.getElementById(
+                    "aiMetrics"
+                ).classList.remove("hidden");
+
+                const insights =
+                    document.getElementById(
+                        "aiInsights"
+                    );
+
+                insights.innerHTML = "";
+
+                if (data.insights &&
+                    data.insights.length > 0) {
+
+                    const heading =
+                        document.createElement("h3");
+
+                    heading.textContent =
+                        "AI Insights";
+
+                    insights.appendChild(heading);
+
+                    data.insights.forEach(
+                        insight => {
+
+                            const item =
+                                document.createElement("div");
+
+                            item.className =
+                                "ai-insight";
+
+                            item.textContent =
+                                insight;
+
+                            insights.appendChild(item);
+                        }
+                    );
+
+                    insights.classList.remove(
+                        "hidden"
+                    );
+                }
+
                 aiRecommendations.innerHTML = "";
 
-                if (data.recommendations && data.recommendations.length > 0) {
-                    data.recommendations.forEach(rec => {
-                        const item = document.createElement("div");
-                        item.className = "ai-recommendation-item";
-                        item.innerHTML = `<strong>${escapeHtml(rec.title)}:</strong> ${escapeHtml(rec.reason)}`;
-                        aiRecommendations.appendChild(item);
-                    });
-                    aiRecommendations.classList.remove("hidden");
+                if (data.recommendations &&
+                    data.recommendations.length > 0) {
+
+                    data.recommendations.forEach(
+                        rec => {
+
+                            const item =
+                                document.createElement("div");
+
+                            item.className =
+                                "ai-recommendation-item";
+
+                            const priority =
+                                rec.priority ||
+                                "MEDIUM";
+
+                            item.innerHTML = `
+                                <div class="ai-rec-top">
+                                    <strong>
+                                        ${escapeHtml(
+                                            rec.title || ""
+                                        )}
+                                    </strong>
+
+                                    <span class="ai-priority ai-priority-${priority.toLowerCase()}">
+                                        ${escapeHtml(priority)}
+                                    </span>
+                                </div>
+
+                                <p>
+                                    ${escapeHtml(
+                                        rec.reason || ""
+                                    )}
+                                </p>
+
+                                ${
+                                    rec.action
+                                        ? `
+                                        <div class="ai-action">
+                                            <strong>Next:</strong>
+                                            ${escapeHtml(
+                                                rec.action
+                                            )}
+                                        </div>
+                                        `
+                                        : ""
+                                }
+
+                                ${
+                                    rec.estimatedMinutes
+                                        ? `
+                                        <span class="ai-duration">
+                                            ~${escapeHtml(
+                                                String(
+                                                    rec.estimatedMinutes
+                                                )
+                                            )} min
+                                        </span>
+                                        `
+                                        : ""
+                                }
+                            `;
+
+                            aiRecommendations
+                                .appendChild(item);
+                        }
+                    );
+
+                    aiRecommendations.classList.remove(
+                        "hidden"
+                    );
                 } else {
-                    aiRecommendations.innerHTML = "<p class='muted'>No urgent priorities right now.</p>";
-                    aiRecommendations.classList.remove("hidden");
+
+                    aiRecommendations.innerHTML =
+                        "<p class='muted'>No major priorities detected.</p>";
+
+                    aiRecommendations.classList.remove(
+                        "hidden"
+                    );
                 }
+
             } catch (error) {
-                aiSummary.textContent = "Unable to load AI recommendations at this time.";
+
+                aiSummary.textContent =
+                    "Unable to load AI recommendations.";
+
             } finally {
+
                 getAiPlanBtn.disabled = false;
-                getAiPlanBtn.textContent = "Analyze My Day";
+                getAiPlanBtn.textContent =
+                    "Analyze My Day";
             }
-        });
-    }
+        }
+    );
+}
+
+
+// ---------- AI Chat ----------
+
+if (aiChatForm) {
+
+    aiChatForm.addEventListener(
+        "submit",
+        async event => {
+
+            event.preventDefault();
+
+            const message =
+                aiChatInput.value.trim();
+
+            if (!message) {
+                return;
+            }
+
+            addAiMessage(
+                "user",
+                message
+            );
+
+            aiConversation.push({
+                role: "user",
+                content: message
+            });
+
+            aiChatInput.value = "";
+            aiChatSend.disabled = true;
+            aiChatSend.textContent =
+                "...";
+
+            try {
+
+                const response =
+                    await api(
+                        "/api/ai/chat",
+                        {
+                            method: "POST",
+                            body: JSON.stringify({
+                                message: message,
+                                history:
+                                    aiConversation.slice(-12)
+                            })
+                        }
+                    );
+
+                const data =
+                    await response.json();
+
+                if (!response.ok) {
+
+                    addAiMessage(
+                        "ai",
+                        data.error ||
+                        "The AI could not answer that."
+                    );
+
+                    return;
+                }
+
+                addAiMessage(
+                    "ai",
+                    data.reply ||
+                    "I don't have a useful answer for that yet."
+                );
+
+                aiConversation.push({
+                    role: "model",
+                    content:
+                        data.reply || ""
+                });
+
+                renderAiSuggestions(
+                    data.suggestions
+                );
+
+                renderAiBreakdown(
+                    data.breakdown
+                );
+
+                renderAiSchedule(
+                    data.schedule
+                );
+
+            } catch (error) {
+
+                addAiMessage(
+                    "ai",
+                    "I couldn't reach the AI service right now."
+                );
+
+            } finally {
+
+                aiChatSend.disabled = false;
+                aiChatSend.textContent =
+                    "Ask";
+
+                aiChatInput.focus();
+            }
+        }
+    );
+}
 
     function escapeHtml(value) {
         const div = document.createElement("div");
