@@ -13,7 +13,6 @@ import com.karabo.taskflow.dto.AiChatMessage;
 import com.karabo.taskflow.dto.AiChatRequest;
 import com.karabo.taskflow.dto.AiChatResponse;
 import com.karabo.taskflow.dto.AiPlanResponse;
-import com.karabo.taskflow.dto.AiScheduleItem;
 import com.karabo.taskflow.dto.RecommendationDto;
 import com.karabo.taskflow.model.Task;
 import com.karabo.taskflow.model.TaskStatus;
@@ -72,7 +71,6 @@ public class AiService {
         String prompt = buildPlanPrompt(tasks, context);
 
         try {
-
             String rawResponse = callGemini(prompt);
 
             JsonNode json = extractJson(rawResponse);
@@ -88,15 +86,57 @@ public class AiService {
                 result.setInsights(new ArrayList<>());
             }
 
+            // Always use real application data for workload metrics.
+            result.setTotalEstimatedMinutes(context.totalMinutes());
+            result.setOverdueCount(context.overdue());
+            result.setDueTodayCount(context.todayCount());
+            result.setDueTomorrowCount(context.tomorrowCount());
+
+            // Only allow recommendations for tasks that actually exist.
+            List<String> validTitles = tasks.stream()
+                    .map(Task::getTitle)
+                    .filter(title -> title != null && !title.isBlank())
+                    .toList();
+
+            List<RecommendationDto> validRecommendations =
+                    result.getRecommendations()
+                            .stream()
+                            .filter(rec -> rec != null)
+                            .filter(rec ->
+                                    rec.getTitle() != null &&
+                                    !rec.getTitle().isBlank())
+                            .filter(rec ->
+                                    validTitles.stream()
+                                            .anyMatch(title ->
+                                                    title.equalsIgnoreCase(
+                                                            rec.getTitle())))
+                            .filter(rec ->
+                                    rec.getReason() != null &&
+                                    !rec.getReason().isBlank())
+                            .filter(rec ->
+                                    rec.getAction() != null &&
+                                    !rec.getAction().isBlank())
+                            .limit(Math.min(5, tasks.size()))
+                            .collect(Collectors.toCollection(ArrayList::new));
+
+            // If Gemini produces unusable recommendations,
+            // use the deterministic local fallback.
+            if (validRecommendations.isEmpty()) {
+                return fallbackPlan(tasks, context);
+            }
+
+            result.setRecommendations(validRecommendations);
+
             return result;
 
         } catch (Exception exception) {
-
             return fallbackPlan(tasks, context);
         }
     }
 
-    public AiChatResponse chat(User user, AiChatRequest request) {
+    public AiChatResponse chat(
+            User user,
+            AiChatRequest request) {
 
         List<Task> tasks = getActiveTasks(user);
 
@@ -110,7 +150,10 @@ public class AiService {
         }
 
         if (apiKey == null || apiKey.isBlank()) {
-            return fallbackChat(tasks, request.getMessage());
+            return fallbackChat(
+                    tasks,
+                    request.getMessage()
+            );
         }
 
         WorkloadContext context = buildContext(tasks);
@@ -123,7 +166,6 @@ public class AiService {
         );
 
         try {
-
             String rawResponse = callGemini(prompt);
 
             JsonNode json = extractJson(rawResponse);
@@ -134,7 +176,6 @@ public class AiService {
             );
 
         } catch (Exception exception) {
-
             return fallbackChat(
                     tasks,
                     request.getMessage()
@@ -182,6 +223,8 @@ public class AiService {
                         1,
                         task.getEstimatedMinutes()
                 );
+            } else {
+                totalMinutes += 30;
             }
 
             if (task.getStatus() == TaskStatus.IN_PROGRESS) {
@@ -213,8 +256,7 @@ public class AiService {
                             task.getDueDate()
                     );
 
-            taskData.append(
-                    """
+            String taskBlock = """
                     TASK
                     id: %s
                     title: %s
@@ -225,8 +267,7 @@ public class AiService {
                     estimatedMinutes: %s
                     createdAt: %s
 
-                    """
-            .formatted(
+                    """.formatted(
                     task.getId(),
                     task.getTitle(),
                     task.getDescription(),
@@ -235,7 +276,9 @@ public class AiService {
                     daysUntil,
                     task.getEstimatedMinutes(),
                     task.getCreatedAt()
-            ));
+            );
+
+            taskData.append(taskBlock);
         }
 
         return """
@@ -269,7 +312,8 @@ public class AiService {
 
                 4. Avoid recommending every task equally.
 
-                5. Give 3 to 5 genuinely useful recommendations.
+                5. Give 3 to 5 genuinely useful recommendations when enough tasks exist.
+                   If fewer active tasks exist, only recommend the tasks that actually exist.
 
                 6. Each recommendation must explain WHY that specific task matters NOW.
 
@@ -315,17 +359,16 @@ public class AiService {
                   "dueTodayCount": 2,
                   "dueTomorrowCount": 1
                 }
-                """
-                .formatted(
-                        context.today(),
-                        tasks.size(),
-                        context.overdue(),
-                        context.todayCount(),
-                        context.tomorrowCount(),
-                        context.inProgress(),
-                        context.totalMinutes(),
-                        taskData
-                );
+                """.formatted(
+                context.today(),
+                tasks.size(),
+                context.overdue(),
+                context.todayCount(),
+                context.tomorrowCount(),
+                context.inProgress(),
+                context.totalMinutes(),
+                taskData.toString()
+        );
     }
 
     private String buildChatPrompt(
@@ -337,15 +380,14 @@ public class AiService {
         String taskData = tasks.stream()
                 .map(task -> """
                         - %s | status=%s | due=%s | minutes=%s | description=%s
-                        """
-                        .formatted(
-                                task.getTitle(),
-                                task.getStatus(),
-                                task.getDueDate(),
-                                task.getEstimatedMinutes(),
-                                task.getDescription()
-                        ))
-                .collect(Collectors.joining());
+                        """.formatted(
+                        task.getTitle(),
+                        task.getStatus(),
+                        task.getDueDate(),
+                        task.getEstimatedMinutes(),
+                        task.getDescription()
+                ))
+                .collect(Collectors.joining("\n"));
 
         String conversation = "";
 
@@ -354,11 +396,10 @@ public class AiService {
             conversation = history.stream()
                     .limit(12)
                     .map(item ->
-                            "%s: %s"
-                                    .formatted(
-                                            item.getRole(),
-                                            item.getContent()
-                                    ))
+                            "%s: %s".formatted(
+                                    item.getRole(),
+                                    item.getContent()
+                            ))
                     .collect(Collectors.joining("\n"));
         }
 
@@ -437,19 +478,18 @@ public class AiService {
                     }
                   ]
                 }
-                """
-                .formatted(
-                        context.today(),
-                        tasks.size(),
-                        context.overdue(),
-                        context.todayCount(),
-                        context.tomorrowCount(),
-                        context.totalMinutes(),
-                        context.inProgress(),
-                        taskData,
-                        conversation,
-                        message
-                );
+                """.formatted(
+                context.today(),
+                tasks.size(),
+                context.overdue(),
+                context.todayCount(),
+                context.tomorrowCount(),
+                context.totalMinutes(),
+                context.inProgress(),
+                taskData,
+                conversation,
+                message
+        );
     }
 
     private String callGemini(String prompt) {
@@ -492,7 +532,9 @@ public class AiService {
                 .uri(uriBuilder -> uriBuilder
                         .scheme("https")
                         .host("generativelanguage.googleapis.com")
-                        .path("/v1beta/models/gemini-2.5-flash:generateContent")
+                        .path(
+                                "/v1beta/models/gemini-2.5-flash:generateContent"
+                        )
                         .queryParam("key", apiKey)
                         .build())
                 .contentType(MediaType.APPLICATION_JSON)
@@ -503,6 +545,12 @@ public class AiService {
 
     private JsonNode extractJson(String rawResponse)
             throws Exception {
+
+        if (rawResponse == null || rawResponse.isBlank()) {
+            throw new IllegalStateException(
+                    "Gemini returned an empty response"
+            );
+        }
 
         JsonNode candidates =
                 objectMapper
@@ -536,11 +584,16 @@ public class AiService {
                         .path("text")
                         .asText();
 
-        String clean =
-                text
-                        .replace("```json", "")
-                        .replace("```", "")
-                        .trim();
+        if (text == null || text.isBlank()) {
+            throw new IllegalStateException(
+                    "Gemini returned empty text"
+            );
+        }
+
+        String clean = text
+                .replace("```json", "")
+                .replace("```", "")
+                .trim();
 
         return objectMapper.readTree(clean);
     }
@@ -555,10 +608,22 @@ public class AiService {
         List<Task> sorted = tasks.stream()
                 .sorted((a, b) -> {
 
-                    int aScore = priorityScore(a, context.today());
-                    int bScore = priorityScore(b, context.today());
+                    int aScore =
+                            priorityScore(
+                                    a,
+                                    context.today()
+                            );
 
-                    return Integer.compare(bScore, aScore);
+                    int bScore =
+                            priorityScore(
+                                    b,
+                                    context.today()
+                            );
+
+                    return Integer.compare(
+                            bScore,
+                            aScore
+                    );
                 })
                 .limit(5)
                 .toList();
@@ -598,6 +663,12 @@ public class AiService {
                 reason =
                         "It is already in progress, so finishing it can reduce context switching.";
 
+            } else if (task.getDueDate()
+                    .equals(context.today().plusDays(1))) {
+
+                reason =
+                        "This task is due tomorrow, so starting it now reduces the risk of a last-minute rush.";
+
             } else {
 
                 reason =
@@ -609,7 +680,7 @@ public class AiService {
                             task.getTitle(),
                             reason,
                             priority,
-                            "Start with the smallest concrete step for this task.",
+                            buildTaskAction(task),
                             task.getEstimatedMinutes()
                     )
             );
@@ -631,28 +702,88 @@ public class AiService {
                     context.todayCount() +
                     " task(s) due today. Focus on those before taking on lower-priority work.";
 
+        } else if (context.tomorrowCount() > 0) {
+
+            summary =
+                    "Your immediate deadlines are tomorrow. Use the available time today to make meaningful progress before the deadline arrives.";
+
         } else {
 
             summary =
                     "Your deadlines are relatively controlled. Use your current in-progress work and nearest deadlines to decide what to tackle next.";
         }
 
+        List<String> insights = new ArrayList<>();
+
+        insights.add(
+                "Estimated active workload: " +
+                context.totalMinutes() +
+                " minutes."
+        );
+
+        insights.add(
+                "Currently in progress: " +
+                context.inProgress() +
+                " task(s)."
+        );
+
+        if (context.overdue() > 0) {
+
+            insights.add(
+                    "There are " +
+                    context.overdue() +
+                    " overdue task(s) requiring attention."
+            );
+        }
+
+        if (context.todayCount() > 0) {
+
+            insights.add(
+                    context.todayCount() +
+                    " task(s) are due today."
+            );
+        }
+
+        if (context.tomorrowCount() > 0) {
+
+            insights.add(
+                    context.tomorrowCount() +
+                    " task(s) are due tomorrow."
+            );
+        }
+
         return new AiPlanResponse(
                 summary,
                 recommendations,
-                List.of(
-                        "Estimated active workload: " +
-                                context.totalMinutes() +
-                                " minutes.",
-                        "Currently in progress: " +
-                                context.inProgress() +
-                                " task(s)."
-                ),
+                insights,
                 context.totalMinutes(),
                 context.overdue(),
                 context.todayCount(),
                 context.tomorrowCount()
         );
+    }
+
+    private String buildTaskAction(Task task) {
+
+        String description = task.getDescription();
+
+        if (description != null &&
+                !description.isBlank()) {
+
+            String cleaned =
+                    description.trim();
+
+            if (cleaned.length() > 120) {
+                cleaned =
+                        cleaned.substring(0, 120) +
+                        "...";
+            }
+
+            return "Start by working on this concrete part of the task: " +
+                    cleaned;
+        }
+
+        return "Start with the smallest concrete step for this task.";
     }
 
     private int priorityScore(
@@ -662,7 +793,9 @@ public class AiService {
         int score = 0;
 
         if (task.getDueDate().isBefore(today)) {
+
             score += 150;
+
         } else {
 
             long days =
@@ -672,18 +805,26 @@ public class AiService {
                     );
 
             if (days == 0) {
+
                 score += 120;
+
             } else if (days == 1) {
+
                 score += 90;
+
             } else if (days <= 3) {
+
                 score += 60;
+
             } else if (days <= 7) {
+
                 score += 30;
             }
         }
 
         if (task.getStatus() ==
                 TaskStatus.IN_PROGRESS) {
+
             score += 25;
         }
 
@@ -739,8 +880,8 @@ public class AiService {
 
             response.setReply(
                     "Based on your deadlines, I would start with \"" +
-                            first.getTitle() +
-                            "\". It currently has the strongest priority signal in your active workload."
+                    first.getTitle() +
+                    "\". It currently has the strongest priority signal in your active workload."
             );
 
         } else if (lower.contains("break") ||
@@ -751,8 +892,8 @@ public class AiService {
 
             response.setReply(
                     "A good way to break down \"" +
-                            task.getTitle() +
-                            "\" is to first define the desired outcome, then identify the first concrete action, complete that action, review the result, and finish the remaining work."
+                    task.getTitle() +
+                    "\" is to first define the desired outcome, then identify the first concrete action, complete that action, review the result, and finish the remaining work."
             );
 
             response.setBreakdown(

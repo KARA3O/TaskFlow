@@ -766,6 +766,13 @@ if (aiChatForm) {
                 message
             );
 
+            // Snapshot history BEFORE adding the current message: the
+            // backend already receives the current message via the
+            // separate "message" field, so it must not also be the
+            // last entry in "history" or the AI sees it twice.
+            const historyToSend =
+                aiConversation.slice(-12);
+
             aiConversation.push({
                 role: "user",
                 content: message
@@ -785,8 +792,7 @@ if (aiChatForm) {
                             method: "POST",
                             body: JSON.stringify({
                                 message: message,
-                                history:
-                                    aiConversation.slice(-12)
+                                history: historyToSend
                             })
                         }
                     );

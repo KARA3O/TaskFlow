@@ -12,6 +12,7 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -56,6 +57,14 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ResponseEntity<Map<String, Object>> handleConflict(DataIntegrityViolationException exception) {
         return error(HttpStatus.CONFLICT, "This request conflicts with existing data");
+    }
+
+    // Harmless browser requests for a resource that doesn't exist (most
+    // commonly /favicon.ico) must stay a quiet 404, not fall through to
+    // the catch-all below and get logged/returned as a 500.
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ResponseEntity<Map<String, Object>> handleMissingStaticResource(NoResourceFoundException exception) {
+        return error(HttpStatus.NOT_FOUND, "Not found");
     }
 
     // Catch-all safety net: any exception not handled above still gets a

@@ -73,22 +73,108 @@
             <button id="logoutButton" class="btn btn-ghost">Log out</button>
         </header>
 
-        <!-- AI Recommendation Executive Banner -->
-        <div class="card ai-card" id="aiCard">
-            <div class="ai-header">
-                <h3>✨ AI Assistant Plan</h3>
-                <button id="getAiPlanBtn" class="btn btn-secondary">Analyze My Day</button>
+       <!-- AI Assistant -->
+<div class="card ai-card" id="aiCard">
+
+    <div class="ai-header">
+        <div>
+            <div class="ai-title-row">
+                <span class="ai-icon">✨</span>
+                <div>
+                    <h2>TaskFlow AI</h2>
+                    <p class="muted">Your intelligent productivity copilot</p>
+                </div>
             </div>
-            <p id="aiSummary" class="muted">Click 'Analyze My Day' to generate an optimized workflow schedule using Gemini AI.</p>
-            <div id="aiMetrics" class="ai-metrics hidden" aria-live="polite">
-                <div><strong id="aiWorkload">0</strong><span>min workload</span></div>
-                <div><strong id="aiOverdue">0</strong><span>overdue</span></div>
-                <div><strong id="aiToday">0</strong><span>due today</span></div>
-                <div><strong id="aiTomorrow">0</strong><span>due tomorrow</span></div>
-            </div>
-            <div id="aiInsights" class="ai-insights hidden"></div>
-            <div id="aiRecommendations" class="ai-recommendations-list hidden"></div>
         </div>
+
+        <button id="getAiPlanBtn" class="btn btn-secondary">
+            Analyze My Day
+        </button>
+    </div>
+
+    <div class="ai-overview">
+        <p id="aiSummary" class="ai-summary">
+            Analyze your tasks to get a personalized plan.
+        </p>
+
+        <div id="aiMetrics" class="ai-metrics hidden">
+            <div>
+                <strong id="aiWorkload">0</strong>
+                <span>min workload</span>
+            </div>
+
+            <div>
+                <strong id="aiOverdue">0</strong>
+                <span>overdue</span>
+            </div>
+
+            <div>
+                <strong id="aiToday">0</strong>
+                <span>due today</span>
+            </div>
+
+            <div>
+                <strong id="aiTomorrow">0</strong>
+                <span>tomorrow</span>
+            </div>
+        </div>
+    </div>
+
+    <div id="aiInsights" class="ai-insights hidden"></div>
+
+    <div id="aiRecommendations"
+         class="ai-recommendations-list hidden">
+    </div>
+
+    <div class="ai-chat">
+
+        <div class="ai-chat-header">
+            <div>
+                <strong>Ask TaskFlow AI</strong>
+                <span class="muted">Ask anything about your workload</span>
+            </div>
+        </div>
+
+        <div id="aiChatMessages"
+             class="ai-chat-messages">
+
+            <div class="ai-message ai-message-ai">
+                <div class="ai-message-label">TaskFlow AI</div>
+                <div>
+                    I can help you prioritize tasks, plan your day,
+                    break down work, and identify risks in your schedule.
+                </div>
+            </div>
+
+        </div>
+
+        <form id="aiChatForm" class="ai-chat-form">
+
+            <input
+                id="aiChatInput"
+                type="text"
+                placeholder="e.g. What should I work on first?"
+                autocomplete="off"
+                maxlength="1000"
+                required
+            >
+
+            <button
+                type="submit"
+                id="aiChatSend"
+                class="btn btn-primary">
+                Ask
+            </button>
+
+        </form>
+
+        <div id="aiSuggestions"
+             class="ai-suggestions">
+        </div>
+
+    </div>
+
+</div>
 
         <div class="stats" id="stats" aria-hidden="true">
             <div class="stat">
